@@ -24,12 +24,30 @@
         },
         {
           "Label": {
+            "default": "Namespace Configuration"
+          },
+          "Parameters": [
+            "Namespace"
+          ]
+        },
+        {
+          "Label": {
             "default": "Options"
           },
           "Parameters": [
             "UseCloudWatchMetrics",
             "Trace",
             "EnableSSMMaintenanceWindows"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Account Structure"
+          },
+          "Parameters": [
+            "UsingAWSOrganizations",
+            "Principals",
+            "Regions"
           ]
         },
         {
@@ -56,8 +74,14 @@
         "SchedulingActive": {
           "default": "Scheduling enabled"
         },
+        "UsingAWSOrganizations": {
+          "default": "Use AWS Organizations"
+        },
         "CrossAccountRoles": {
           "default": "Cross-account roles"
+        },
+        "Principals": {
+          "default": "Organization Id/Remote Account Ids"
         },
         "ScheduleLambdaAccount": {
           "default": "This account"
@@ -655,9 +679,28 @@
       "Type": "CommaDelimitedList",
       "Description": "List of regions in which instances are scheduled, leave blank for current region only."
     },
+    "UsingAWSOrganizations": {
+      "Type": "String",
+      "Default": "No",
+      "AllowedValues": [
+        "Yes",
+        "No"
+      ],
+      "Description": "Use AWS Organizations to automate spoke account registration."
+    },
     "CrossAccountRoles": {
       "Type": "CommaDelimitedList",
       "Description": "Comma separated list of ARN's for cross account access roles. These roles must be created in all checked accounts the scheduler to start and stop instances."
+    },
+    "Principals": {
+      "Type": "CommaDelimitedList",
+      "Default": "",
+      "Description": "(Required) If using AWS Organizations, provide the Organization ID. Eg. o-xxxxyyy. Else, provide a comma separated list of spoke account ids to schedule. Eg.: 1111111111, 2222222222 or {param: ssm-param-name}"
+    },
+    "Namespace": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Provide unique identifier to differentiate between multiple solution deployments (No Spaces). Example: Dev"
     },
     "StartedTags": {
       "Type": "String",
@@ -691,6 +734,248 @@
       "Description": "Schedule instances in this account."
     }
   },
+  "Conditions": {
+    "IsMemberOfOrganization": {
+      "Fn::Equals": [
+        {
+          "Ref": "UsingAWSOrganizations"
+        },
+        "Yes"
+      ]
+    },
+    "ScheduleEC2": {
+      "Fn::Or": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ScheduledServices"
+            },
+            "EC2"
+          ]
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ScheduledServices"
+            },
+            "Both"
+          ]
+        }
+      ]
+    },
+    "ScheduleRDS": {
+      "Fn::Or": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ScheduledServices"
+            },
+            "RDS"
+          ]
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ScheduledServices"
+            },
+            "Both"
+          ]
+        }
+      ]
+    },
+    "CDKMetadataAvailable": {
+      "Fn::Or": [
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "af-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ca-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-northwest-1"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-3"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "me-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "sa-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-2"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-2"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
   "Mappings": {
     "mappings": {
       "TrueFalse": {
@@ -718,6 +1003,12 @@
       "Settings": {
         "MetricsUrl": "https://metrics.awssolutionsbuilder.com/generic",
         "MetricsSolutionId": "S00030"
+      },
+      "SchedulerRole": {
+        "Name": "Scheduler-Role"
+      },
+      "SchedulerEventBusName": {
+        "Name": "scheduler-event-bus"
       }
     },
     "Send": {
@@ -725,7 +1016,16 @@
         "Data": "Yes"
       },
       "ParameterKey": {
-        "UniqueId": "/Solutions/aws-instance-scheduler/UUID/"
+        "UniqueId": "/Solutions/instance-scheduler-on-aws/UUID/"
+      }
+    },
+    "AppRegistryForInstanceSchedulerSolution25A90F05": {
+      "Data": {
+        "ID": "SO0030",
+        "Version": "v1.4.1",
+        "AppRegistryApplicationName": "instance-scheduler-on-aws",
+        "SolutionName": "instance-scheduler-on-aws",
+        "ApplicationType": "AWS-Solutions"
       }
     }
   },
@@ -1092,7 +1392,7 @@
               ]
             ]
           },
-          "S3Key": "aws-instance-scheduler/v1.4.1/instance-scheduler.zip"
+          "S3Key": "instance-scheduler-on-aws/v1.5.3/4d2ad5b662659bd9097ad8da145fe83d22c29593196ed45a86e3e047e0a51376.zip"
         },
         "Role": {
           "Fn::GetAtt": [
@@ -1143,6 +1443,7 @@
                 "MetricsSolutionId"
               ]
             },
+            "SOLUTION_VERSION": "v1.4.1",
             "TRACE": {
               "Fn::FindInMap": [
                 "mappings",
@@ -1192,6 +1493,104 @@
               ]
             },
             "START_EC2_BATCH_SIZE": "5",
+            "SCHEDULE_TAG_KEY": {
+              "Ref": "TagName"
+            },
+            "DEFAULT_TIMEZONE": {
+              "Ref": "DefaultTimezone"
+            },
+            "ENABLE_CLOUDWATCH_METRICS": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "UseCloudWatchMetrics"
+                }
+              ]
+            },
+            "ENABLE_EC2_SERVICE": {
+              "Fn::If": [
+                "ScheduleEC2",
+                "True",
+                "False"
+              ]
+            },
+            "ENABLE_RDS_SERVICE": {
+              "Fn::If": [
+                "ScheduleRDS",
+                "True",
+                "False"
+              ]
+            },
+            "ENABLE_RDS_CLUSTERS": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "ScheduleRdsClusters"
+                }
+              ]
+            },
+            "ENABLE_RDS_SNAPSHOTS": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "CreateRdsSnapshot"
+                }
+              ]
+            },
+            "SCHEDULE_REGIONS": {
+              "Fn::Join": [
+                ",",
+                {
+                  "Ref": "Regions"
+                }
+              ]
+            },
+            "APP_NAMESPACE": {
+              "Ref": "Namespace"
+            },
+            "SCHEDULER_ROLE_NAME": {
+              "Fn::FindInMap": [
+                "mappings",
+                "SchedulerRole",
+                "Name"
+              ]
+            },
+            "ENABLE_SCHEDULE_HUB_ACCOUNT": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "ScheduleLambdaAccount"
+                }
+              ]
+            },
+            "ENABLE_EC2_SSM_MAINTENANCE_WINDOWS": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "EnableSSMMaintenanceWindows"
+                }
+              ]
+            },
+            "START_TAGS": {
+              "Ref": "StartedTags"
+            },
+            "STOP_TAGS": {
+              "Ref": "StoppedTags"
+            },
+            "ENABLE_AWS_ORGANIZATIONS": {
+              "Fn::FindInMap": [
+                "mappings",
+                "TrueFalse",
+                {
+                  "Ref": "UsingAWSOrganizations"
+                }
+              ]
+            },
             "DDB_TABLE_NAME": {
               "Ref": "StateTable"
             },
@@ -1217,11 +1616,11 @@
             ]
           ]
         },
-        "Handler": "main.lambda_handler",
+        "Handler": "instance_scheduler.main.lambda_handler",
         "MemorySize": {
           "Ref": "MemorySize"
         },
-        "Runtime": "python3.7",
+        "Runtime": "python3.12",
         "Timeout": 300,
         "TracingConfig": {
           "Mode": "Active"
@@ -1447,9 +1846,6 @@
           ]
         },
         "timeout": 120,
-        "config_table": {
-          "Ref": "ConfigTable"
-        },
         "tagname": {
           "Ref": "TagName"
         },
@@ -1500,8 +1896,21 @@
         "regions": {
           "Ref": "Regions"
         },
-        "cross_account_roles": {
-          "Ref": "CrossAccountRoles"
+        "remote_account_ids": {
+          "Ref": "Principals"
+        },
+        "namespace": {
+          "Ref": "Namespace"
+        },
+        "aws_partition": {
+          "Fn::Sub": "${AWS::Partition}"
+        },
+        "scheduler_role_name": {
+          "Fn::FindInMap": [
+            "mappings",
+            "SchedulerRole",
+            "Name"
+          ]
         },
         "schedule_lambda_account": {
           "Fn::FindInMap": [
@@ -1521,7 +1930,7 @@
             }
           ]
         },
-        "enable_SSM_maintenance_windows": {
+        "enable_ssm_maintenance_windows": {
           "Fn::FindInMap": [
             "mappings",
             "TrueFalse",
@@ -1539,7 +1948,16 @@
         "stopped_tags": {
           "Ref": "StoppedTags"
         },
-        "stack_version": "v1.4.1"
+        "stack_version": "v1.4.1",
+        "use_aws_organizations": {
+          "Fn::FindInMap": [
+            "mappings",
+            "TrueFalse",
+            {
+              "Ref": "UsingAWSOrganizations"
+            }
+          ]
+        }
       },
       "DependsOn": [
         "SchedulerLogGroup"
@@ -1547,7 +1965,7 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete",
       "Metadata": {
-        "aws:cdk:path": "aws-instance-scheduler/ServiceSetup/Default"
+        "aws:cdk:path": "instance-scheduler-on-aws/ServiceSetup/Default"
       }
     },
     "Ec2PermissionsB6E87802": {
